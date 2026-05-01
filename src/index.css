@@ -1,0 +1,152 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pst-blue: #2383e2;
+  --color-pst-emerald: #2383e2;
+  --color-pst-amber: #2383e2;
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased selection:bg-primary/10 selection:text-primary;
+  }
+  html {
+    @apply font-sans;
+  }
+}
+
+@layer components {
+  .academic-card {
+    @apply bg-card border border-border rounded-md transition-colors hover:bg-muted/50;
+  }
+  
+  .dashboard-hero {
+    @apply bg-card border border-border p-8 rounded-md;
+  }
+  
+  .progress-ring {
+    @apply transition-all duration-300;
+  }
+
+  .glass-panel {
+    @apply bg-card border border-border rounded-md;
+  }
+
+  .bento-grid {
+    @apply grid grid-cols-1 md:grid-cols-12 gap-4;
+  }
+
+  .text-glow {
+    text-shadow: none;
+  }
+}
+
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: var(--font-display);
+    --font-sans: "Inter", sans-serif;
+    --font-mono: monospace;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: #eb5757;
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: 2px;
+    --radius-md: 4px;
+    --radius-lg: 6px;
+    --radius-xl: 8px;
+}
+
+:root, [data-theme="light"] {
+    --background: #ffffff;
+    --foreground: #37352f;
+    --card: #ffffff;
+    --card-foreground: #37352f;
+    --popover: #ffffff;
+    --popover-foreground: #37352f;
+    --primary: #2383e2;
+    --primary-foreground: #ffffff;
+    --secondary: #f7f6f3;
+    --secondary-foreground: #37352f;
+    --muted: #f7f6f3;
+    --muted-foreground: #91918e;
+    --accent: #f7f6f3;
+    --accent-foreground: #37352f;
+    --destructive: #eb5757;
+    --border: #e9e9e7;
+    --input: #e9e9e7;
+    --ring: rgba(35, 131, 226, 0.2);
+    --radius: 4px;
+    --sidebar: #f7f6f3;
+    --sidebar-foreground: #37352f;
+    --sidebar-primary: #2383e2;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #efefed;
+    --sidebar-accent-foreground: #37352f;
+    --sidebar-border: #e9e9e7;
+    --sidebar-ring: rgba(35, 131, 226, 0.2);
+    color-scheme: light;
+}
+
+[data-theme="dark"], .dark {
+    --background: #191919;
+    --foreground: rgba(255, 255, 255, 0.9);
+    --card: #202020;
+    --card-foreground: rgba(255, 255, 255, 0.9);
+    --popover: #252525;
+    --popover-foreground: rgba(255, 255, 255, 0.9);
+    --primary: #2383e2;
+    --primary-foreground: #ffffff;
+    --secondary: #252525;
+    --secondary-foreground: rgba(255, 255, 255, 0.9);
+    --muted: #252525;
+    --muted-foreground: rgba(255, 255, 255, 0.44);
+    --accent: #2c2c2c;
+    --accent-foreground: rgba(255, 255, 255, 0.9);
+    --destructive: #ff5252;
+    --border: rgba(255, 255, 255, 0.1);
+    --input: rgba(255, 255, 255, 0.1);
+    --ring: #2383e2;
+    --sidebar: #1d1d1d;
+    --sidebar-foreground: rgba(255, 255, 255, 0.6);
+    --sidebar-primary: #2383e2;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #2c2c2c;
+    --sidebar-accent-foreground: rgba(255, 255, 255, 0.9);
+    --sidebar-border: rgba(255, 255, 255, 0.1);
+    --sidebar-ring: rgba(35, 131, 226, 0.4);
+    color-scheme: dark;
+}

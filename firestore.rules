@@ -1,0 +1,161 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} { 
+      allow read, write: if false; 
+    }
+
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+
+    function isValidEmail(email) {
+      return email is string && email.size() <= 256 && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+
+    function isValidDate(dateStr) {
+      return dateStr is string && dateStr.size() <= 20 && dateStr.matches("^\\d{4}-\\d{2}-\\d{2}.*");
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUserCreate(data, userId) {
+      return data.keys().hasAll(['email', 'startDate', 'examDate', 'currentWeek', 'practiceTestsTaken', 'essaysWritten', 'badges']) &&
+             isValidEmail(data.email) &&
+             isValidDate(data.startDate) &&
+             isValidDate(data.examDate) &&
+             data.currentWeek is number && data.currentWeek >= 1 &&
+             data.practiceTestsTaken is number && data.practiceTestsTaken >= 0 &&
+             data.essaysWritten is list && data.essaysWritten.size() <= 100 &&
+             data.badges is list && data.badges.size() <= 100 &&
+             (!data.keys().hasAny(['targetBand']) || (data.targetBand is number && data.targetBand >= 0 && data.targetBand <= 9)) &&
+             request.auth.uid == userId;
+    }
+
+    function isValidUserUpdate(data) {
+      return data.keys().hasAll(['email', 'startDate', 'examDate', 'currentWeek', 'practiceTestsTaken', 'essaysWritten', 'badges']) &&
+             isValidEmail(data.email) &&
+             isValidDate(data.startDate) &&
+             isValidDate(data.examDate) &&
+             data.currentWeek is number && data.currentWeek >= 1 &&
+             data.practiceTestsTaken is number && data.practiceTestsTaken >= 0 &&
+             data.essaysWritten is list && data.essaysWritten.size() <= 100 &&
+             data.badges is list && data.badges.size() <= 100 &&
+             (!data.keys().hasAny(['targetBand']) || (data.targetBand is number && data.targetBand >= 0 && data.targetBand <= 9)) &&
+             (
+               !data.keys().hasAny(['completedTasks']) || 
+               (data.completedTasks is map && data.completedTasks.size() <= 1000)
+             );
+    }
+
+    function isValidWeek(data) {
+      return data.get('weekId', 0) is number &&
+             data.get('completion', 0) is number &&
+             data.get('completion', 0) <= 100;
+    }
+
+    function isValidStudyLog(data) {
+      return data.keys().hasAll(['date', 'hours', 'notes']) &&
+             data.keys().size() == 3 &&
+             isValidDate(data.date) &&
+             data.hours is number && data.hours >= 0 && data.hours <= 24 &&
+             data.notes is string && data.notes.size() <= 5000;
+    }
+    
+    function isValidStudyLogUpdate(data) {
+      return isValidStudyLog(data);
+    }
+
+    function isValidExamRecord(data) {
+      return data.keys().hasAll(['type', 'date', 'overallBand', 'scores']) &&
+             data.type in ['mock', 'official', 'baseline'] &&
+             isValidDate(data.date) &&
+             data.overallBand is number && data.overallBand >= 0 && data.overallBand <= 9 &&
+             data.scores is map && 
+             data.scores.keys().hasAll(['listening', 'reading', 'writing', 'speaking']) &&
+             data.scores.listening is number && data.scores.reading is number &&
+             data.scores.writing is number && data.scores.speaking is number &&
+             (
+               !data.keys().hasAny(['writingTask1', 'writingTask2', 'details']) ||
+               (
+                 (!data.keys().hasAny(['writingTask1']) || data.writingTask1 is string) &&
+                 (!data.keys().hasAny(['writingTask2']) || data.writingTask2 is string) &&
+                 (!data.keys().hasAny(['details']) || (
+                   data.details is map &&
+                   (!data.details.keys().hasAny(['writingTask1']) || data.details.writingTask1 is string) &&
+                   (!data.details.keys().hasAny(['writingTask2']) || data.details.writingTask2 is string) &&
+                   (!data.details.keys().hasAny(['aiFeedback']) || data.details.aiFeedback is string) &&
+                   (!data.details.keys().hasAny(['misspellings']) || data.details.misspellings is list)
+                 ))
+               )
+             );
+    }
+
+    // ===============================================================
+    // Actions - User Profile Updates
+    // ===============================================================
+    
+    function isProgressUpdate() {
+      return incoming().diff(existing()).affectedKeys().hasOnly(['completedTasks', 'practiceTestsTaken']);
+    }
+
+    function isUnlockWeekAction() {
+      return incoming().diff(existing()).affectedKeys().hasOnly(['currentWeek']);
+    }
+
+    function isTargetBandUpdate() {
+      return incoming().diff(existing()).affectedKeys().hasOnly(['targetBand']);
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow get: if isOwner(userId) && isValidId(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserCreate(incoming(), userId);
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserUpdate(incoming()) && (
+        isProgressUpdate() || isUnlockWeekAction() || isTargetBandUpdate()
+      ) && incoming().email == existing().email // email cannot change
+        && incoming().startDate == existing().startDate // start date immutable
+        && incoming().examDate == existing().examDate;
+      
+      match /weeks/{weekId} {
+        allow get: if isOwner(userId) && isValidId(weekId) && isValidId(userId);
+        allow list: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(weekId) && isValidWeek(incoming());
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(weekId) && isValidWeek(incoming());
+      }
+      
+      match /studyLogs/{logId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(logId);
+        allow list: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(logId) && isValidStudyLog(incoming());
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(logId) && isValidStudyLogUpdate(incoming());
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(logId);
+      }
+
+      match /examRecords/{recordId} {
+        allow get: if isOwner(userId) && isValidId(userId) && isValidId(recordId);
+        allow list: if isOwner(userId) && isValidId(userId);
+        allow create: if isOwner(userId) && isValidId(userId) && isValidId(recordId) && isValidExamRecord(incoming());
+        allow update: if isOwner(userId) && isValidId(userId) && isValidId(recordId) && isValidExamRecord(incoming());
+        allow delete: if isOwner(userId) && isValidId(userId) && isValidId(recordId);
+      }
+
+      match /vocabulary/{date} {
+        allow get: if isOwner(userId) && isValidId(userId);
+        allow list: if isOwner(userId) && isValidId(userId);
+        allow write: if isOwner(userId) && isValidId(userId); 
+      }
+    }
+  }
+}

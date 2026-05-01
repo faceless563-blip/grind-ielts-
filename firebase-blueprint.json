@@ -1,0 +1,104 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Core profile data for the student.",
+      "type": "object",
+      "properties": {
+        "displayName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string" },
+        "startDate": { "type": "string", "format": "date" },
+        "examDate": { "type": "string", "format": "date" },
+        "currentWeek": { "type": "integer" },
+        "practiceTestsTaken": { "type": "integer" },
+        "completedTasks": {
+          "type": "object",
+          "additionalProperties": { "type": "number" }
+        },
+        "essaysWritten": { "type": "array", "items": { "type": "string" } },
+        "badges": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["email", "startDate", "examDate"]
+    },
+    "WeekProgress": {
+      "title": "Week Progress",
+      "description": "Detailed progress for a specific week.",
+      "type": "object",
+      "properties": {
+        "weekId": { "type": "integer" },
+        "completion": { "type": "integer" },
+        "tasks": {
+          "type": "object",
+          "properties": {
+            "videos": { "type": "integer" },
+            "books": { "type": "integer" },
+            "projects": { "type": "array", "items": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "StudyLog": {
+      "title": "Study Log",
+      "description": "Daily study entry.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date" },
+        "hours": { "type": "number" },
+        "notes": { "type": "string" }
+      },
+      "required": ["date", "hours"]
+    },
+    "ExamRecord": {
+      "title": "Exam Record",
+      "description": "Historical academic performance data.",
+      "type": "object",
+      "properties": {
+        "type": { "type": "string", "enum": ["mock", "official", "baseline", "listening_mock", "reading_mock", "writing_mock", "speaking_mock"] },
+        "date": { "type": "string", "format": "date" },
+        "overallBand": { "type": "number" },
+        "scores": {
+          "type": "object",
+          "properties": {
+            "listening": { "type": "number" },
+            "reading": { "type": "number" },
+            "writing": { "type": "number" },
+            "speaking": { "type": "number" }
+          }
+        },
+        "details": {
+          "type": "object",
+          "properties": {
+            "writingTask1": { "type": "string" },
+            "writingTask2": { "type": "string" },
+            "writingTask1WordCount": { "type": "number" },
+            "writingTask2WordCount": { "type": "number" },
+            "aiFeedback": { "type": "string" },
+            "reflection": { "type": "string" },
+            "errorTags": { "type": "array", "items": { "type": "string" } },
+            "typingSpeed": { "type": "number" }
+          }
+        }
+      },
+      "required": ["type", "date", "overallBand", "scores"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": {
+      "schema": "UserProfile",
+      "description": "Root user document."
+    },
+    "/users/{uid}/weeks/{weekId}": {
+      "schema": "WeekProgress",
+      "description": "Progress tracking per week."
+    },
+    "/users/{uid}/studyLogs/{logId}": {
+      "schema": "StudyLog",
+      "description": "Daily study logs."
+    },
+    "/users/{uid}/examRecords/{recordId}": {
+      "schema": "ExamRecord",
+      "description": "Exam performance history."
+    }
+  }
+}
